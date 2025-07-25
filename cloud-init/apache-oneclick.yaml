@@ -3,6 +3,7 @@ package_update: false
 package_upgrade: false
 
 write_files:
+  # PHP overrides for Apache SAPI
   - path: /etc/php/8.3/apache2/conf.d/99-searcheo.ini
     owner: root:root
     permissions: '0644'
@@ -12,6 +13,19 @@ write_files:
       max_input_vars = 3000
       upload_max_filesize = 64M
       post_max_size = 64M
+
+  # Same overrides for PHP-CLI
+  - path: /etc/php/8.3/cli/conf.d/99-searcheo.ini
+    owner: root:root
+    permissions: '0644'
+    content: |
+      memory_limit = 256M
+      max_execution_time = 60
+      max_input_vars = 3000
+      upload_max_filesize = 64M
+      post_max_size = 64M
+
+  # Swap-creation script
   - path: /usr/local/bin/create_swap.sh
     owner: root:root
     permissions: '0755'
@@ -31,9 +45,9 @@ write_files:
       echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
 
 runcmd:
-  - /usr/local/bin/create_swap.sh
+  - /usr/local/bin/create_swap.sh      # enable swap
   - ufw allow 22/tcp
   - ufw allow 80/tcp
   - ufw allow 443/tcp
   - ufw --force enable
-  - systemctl restart apache2
+  - systemctl restart apache2          # load new PHP INI
